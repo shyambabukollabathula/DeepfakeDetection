@@ -14,7 +14,7 @@ function App() {
   // Auth state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLogin, setIsLogin] = useState(true); // true: login, false: register
+  const [isLogin, setIsLogin] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   // Detection state
@@ -26,13 +26,12 @@ function App() {
   const [result, setResult] = useState<null | { is_deepfake: number; confidence: number }>(null);
   const [history, setHistory] = useState<DetectionHistoryItem[]>([]);
 
-  // Auth handlers
+  // Auth handlers (unchanged)
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
     try {
       if (isLogin) {
-        // Login
         const form = new FormData();
         form.append('username', email);
         form.append('password', password);
@@ -49,7 +48,6 @@ function App() {
         setEmail('');
         setPassword('');
       } else {
-        // Register
         const res = await fetch(`${API_BASE}/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -59,7 +57,6 @@ function App() {
           const data = await res.json().catch(() => ({}));
           throw new Error(data.detail || 'Registration failed');
         }
-        // Auto-login after registration
         setIsLogin(true);
         setAuthError('Registration successful! Please log in.');
       }
@@ -78,7 +75,7 @@ function App() {
     setError(null);
   };
 
-  // Detection handlers
+  // Detection handlers (unchanged)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
     setResult(null);
@@ -111,12 +108,11 @@ function App() {
     setError(null);
     setResult(null);
     if (!file) {
-      setError('Please select an image file.');
+      setError('Please select an image or video file.');
       return;
     }
     setLoading(true);
     try {
-      // 1. Upload the image
       const formData = new FormData();
       formData.append('file', file);
       const uploadRes = await fetch(`${API_BASE}/upload/`, {
@@ -130,7 +126,6 @@ function App() {
       }
       const uploadData = await uploadRes.json();
       const mediaId = uploadData.id;
-      // 2. Run detection
       const detectRes = await fetch(`${API_BASE}/detect/${mediaId}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
@@ -139,7 +134,6 @@ function App() {
         const data = await detectRes.json().catch(() => ({}));
         throw new Error(data.detail || 'Detection failed');
       }
-      // 3. Get result
       const resultRes = await fetch(`${API_BASE}/result/${mediaId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -152,7 +146,6 @@ function App() {
         is_deepfake: resultData.is_deepfake,
         confidence: resultData.confidence,
       });
-      // Add to history
       setHistory(prev => [
         {
           filename: file.name,
@@ -177,102 +170,264 @@ function App() {
   };
 
   return (
-    <div style={{ maxWidth: 500, margin: '40px auto', padding: 24, background: '#181818', borderRadius: 12, color: '#fff', boxShadow: '0 2px 16px #0004' }}>
-      {/* Auth UI */}
-      {!token ? (
-        <div style={{ marginBottom: 32, background: '#222', borderRadius: 8, padding: 20 }}>
-          <h2 style={{ textAlign: 'center', marginBottom: 16 }}>{isLogin ? 'Login' : 'Register'}</h2>
-          <form onSubmit={handleAuth}>
+    <>
+      {/* Global styles for black background, clean dark theme, and 3D floating panels */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        html, body, #root {
+          height: 100%;
+        }
+        body {
+          min-height: 100vh;
+          height: 100vh;
+          font-family: 'Inter', Arial, sans-serif;
+          background: #111;
+          color: #e5e7eb;
+          margin: 0;
+        }
+        .fullscreen-panel {
+          min-height: 100vh;
+          width: 100vw;
+          background: #23272f;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: flex-start;
+          padding: 48px 0 32px 0;
+          box-shadow: 0 12px 48px 0 #000c, 0 2px 8px #0006, 0 1.5px 0 #2228;
+          border-radius: 32px;
+          transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .fullscreen-panel:hover {
+          box-shadow: 0 24px 64px 0 #000e, 0 4px 16px #0008, 0 2px 0 #222a;
+          transform: translateY(-2px) scale(1.01);
+        }
+        .accent {
+          color: #3b82f6;
+        }
+        .btn {
+          background: #3b82f6;
+          color: #fff;
+          border: none;
+          border-radius: 8px;
+          font-size: 17px;
+          font-weight: 600;
+          padding: 10px 28px;
+          cursor: pointer;
+          margin-top: 8px;
+          transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+          box-shadow: 0 2px 8px #0003;
+        }
+        .btn:hover {
+          background: #2563eb;
+          box-shadow: 0 6px 18px #0005;
+          transform: translateY(-2px) scale(1.03);
+        }
+        .btn:active {
+          background: #1d4ed8;
+        }
+        .btn.secondary {
+          background: #23272f;
+          color: #3b82f6;
+          border: 1.5px solid #3b82f6;
+        }
+        .input, .file-input {
+          width: 100%;
+          padding: 10px;
+          border-radius: 7px;
+          border: 1.5px solid #374151;
+          background: #18181b;
+          color: #e5e7eb;
+          font-size: 16px;
+          margin-bottom: 14px;
+        }
+        .file-input {
+          margin-bottom: 18px;
+        }
+        .divider {
+          height: 1.5px;
+          background: #374151;
+          border: none;
+          margin: 28px 0 20px 0;
+        }
+        .history-panel {
+          background: #23272f;
+          border-radius: 12px;
+          margin-top: 32px;
+          padding: 18px 16px;
+          box-shadow: 0 8px 32px #000b, 0 2px 8px #0003;
+          width: 100%;
+          max-width: 600px;
+          transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .history-panel:hover {
+          box-shadow: 0 16px 48px #000d, 0 4px 16px #0005;
+          transform: translateY(-1.5px) scale(1.01);
+        }
+        .history-item {
+          background: #18181b;
+          border-radius: 8px;
+          padding: 10px 12px;
+          margin-bottom: 10px;
+          font-size: 15px;
+          box-shadow: 0 2px 8px #0004;
+        }
+        .result-panel {
+          background: #23272f;
+          border-radius: 12px;
+          margin-top: 28px;
+          padding: 18px 16px;
+          box-shadow: 0 8px 32px #000b, 0 2px 8px #0003;
+          text-align: center;
+          width: 100%;
+          max-width: 600px;
+          transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .result-panel:hover {
+          box-shadow: 0 16px 48px #000d, 0 4px 16px #0005;
+          transform: translateY(-1.5px) scale(1.01);
+        }
+        .result-label {
+          font-size: 22px;
+          font-weight: 700;
+          margin-bottom: 6px;
+        }
+        .confidence {
+          font-size: 16px;
+          color: #60a5fa;
+        }
+        .error {
+          color: #f87171;
+          margin-top: 14px;
+          text-align: center;
+        }
+        .logout-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 24px;
+          width: 100%;
+          max-width: 600px;
+        }
+        .file-preview {
+          margin-bottom: 18px;
+          text-align: center;
+        }
+        .file-preview img, .file-preview video {
+          max-width: 100%;
+          max-height: 200px;
+          border-radius: 10px;
+          border: 1.5px solid #374151;
+          box-shadow: 0 4px 16px #0007;
+        }
+        @media (max-width: 700px) {
+          .fullscreen-panel {
+            padding: 24px 0 16px 0;
+          }
+          .result-panel, .history-panel, .logout-row {
+            max-width: 98vw;
+            padding-left: 4vw;
+            padding-right: 4vw;
+          }
+        }
+      `}</style>
+      <div className="fullscreen-panel">
+        {/* Auth UI */}
+        {!token ? (
+          <div style={{ width: '100%', maxWidth: 400 }}>
+            <h2 style={{ textAlign: 'center', marginBottom: 18, fontWeight: 700, fontSize: 28 }}>Deepfake Detection</h2>
+            <form onSubmit={handleAuth}>
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                className="input"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                className="input"
+              />
+              <button type="submit" className="btn" style={{ width: '100%' }}>
+                {isLogin ? 'Login' : 'Register'}
+              </button>
+            </form>
+            <div style={{ textAlign: 'center', marginTop: 10 }}>
+              <button onClick={() => { setIsLogin(!isLogin); setAuthError(null); }} className="btn secondary" style={{ width: '100%' }}>
+                {isLogin ? 'Need an account? Register' : 'Already have an account? Login'}
+              </button>
+            </div>
+            {authError && <div className="error">{authError}</div>}
+          </div>
+        ) : (
+          <div className="logout-row">
+            <span style={{ fontSize: 15, color: '#94a3b8' }}>Logged in</span>
+            <button onClick={handleLogout} className="btn secondary">Logout</button>
+          </div>
+        )}
+        {/* Detection UI (only if logged in) */}
+        {token && <>
+          <form onSubmit={handleSubmit} style={{ marginTop: 0, width: '100%', maxWidth: 600 }}>
+            <label style={{ marginBottom: 8, display: 'block', fontWeight: 600, color: '#23272f' }}>Select Image or Video</label>
             <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #333', fontSize: 16 }}
+              type="file"
+              accept=".jpg,.jpeg,.png,.mp4,.avi,.mov"
+              onChange={handleFileChange}
+              className="file-input"
             />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #333', fontSize: 16 }}
-            />
-            <button type="submit" style={{ width: '100%', padding: '8px 0', fontSize: 16, borderRadius: 6, border: 'none', background: '#3b82f6', color: '#fff', cursor: 'pointer', marginBottom: 8 }}>
-              {isLogin ? 'Login' : 'Register'}
+            {preview && (
+              <div className="file-preview">
+                {isVideo ? (
+                  <video src={preview} controls />
+                ) : (
+                  <img src={preview} alt="Preview" />
+                )}
+              </div>
+            )}
+            <button type="submit" className="btn" style={{ width: '100%' }} disabled={loading}>
+              {loading ? 'Processing...' : 'Upload & Detect'}
             </button>
           </form>
-          <div style={{ textAlign: 'center', marginTop: 8 }}>
-            <button onClick={() => { setIsLogin(!isLogin); setAuthError(null); }} style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', textDecoration: 'underline', fontSize: 14 }}>
-              {isLogin ? 'Need an account? Register' : 'Already have an account? Login'}
-            </button>
-          </div>
-          {authError && <div style={{ color: authError.startsWith('Registration successful') ? '#34d399' : '#f87171', marginTop: 8 }}>{authError}</div>}
-        </div>
-      ) : (
-        <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 16 }}>Logged in</span>
-          <button onClick={handleLogout} style={{ background: '#f87171', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 14 }}>Logout</button>
-        </div>
-      )}
-      {/* Detection UI (only if logged in) */}
-      {token && <>
-        <h1 style={{ textAlign: 'center' }}>Deepfake Detection Demo</h1>
-        <form onSubmit={handleSubmit} style={{ marginTop: 32 }}>
-          <input
-            type="file"
-            accept=".jpg,.jpeg,.png,.mp4,.avi,.mov"
-            onChange={handleFileChange}
-            style={{ display: 'block', marginBottom: 16 }}
-          />
-          {preview && (
-            <div style={{ marginBottom: 16, textAlign: 'center' }}>
-              {isVideo ? (
-                <video src={preview} controls style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, border: '1px solid #333' }} />
-              ) : (
-                <img src={preview} alt="Preview" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, border: '1px solid #333' }} />
-              )}
+          {error && <div className="error">{error}</div>}
+          {result && (
+            <div className="result-panel">
+              <div className="result-label accent">
+                {result.is_deepfake ? 'Deepfake Detected' : 'Real Media'}
+              </div>
+              <div className="confidence">
+                Confidence: <b>{(result.confidence * 100).toFixed(1)}%</b>
+              </div>
             </div>
           )}
-          <button type="submit" style={{ padding: '8px 24px', fontSize: 16, borderRadius: 6, border: 'none', background: '#3b82f6', color: '#fff', cursor: 'pointer' }} disabled={loading}>
-            {loading ? 'Processing...' : 'Upload & Detect'}
-          </button>
-        </form>
-        {error && <div style={{ color: '#f87171', marginTop: 16 }}>{error}</div>}
-        {result && (
-          <div style={{ marginTop: 32, padding: 16, background: '#222', borderRadius: 8, textAlign: 'center' }}>
-            <div style={{ fontSize: 22, fontWeight: 600, marginBottom: 8 }}>
-              {result.is_deepfake ? 'Deepfake Detected' : 'Real Media'}
+          {history.length > 0 && (
+            <div className="history-panel">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <span style={{ fontWeight: 600, color: '#23272f' }}>Detection History</span>
+                <button onClick={handleClearHistory} className="btn secondary" style={{ fontSize: 14, padding: '4px 16px' }}>Clear</button>
+              </div>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {history.map((item, idx) => (
+                  <li key={idx} className="history-item">
+                    <div style={{ fontWeight: 600, color: '#23272f' }}>{item.filename}</div>
+                    <div style={{ color: item.is_deepfake ? '#ef4444' : '#2563eb', fontWeight: 700 }}>
+                      {item.is_deepfake ? 'Deepfake Detected' : 'Real Media'}
+                    </div>
+                    <div style={{ fontSize: 14, color: '#2563eb' }}>
+                      Confidence: <b>{(item.confidence * 100).toFixed(1)}%</b>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div style={{ fontSize: 16 }}>
-              Confidence: <b>{(result.confidence * 100).toFixed(1)}%</b>
-            </div>
-          </div>
-        )}
-        {history.length > 0 && (
-          <div style={{ marginTop: 40 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ fontSize: 18, marginBottom: 12, borderBottom: '1px solid #333', paddingBottom: 4, margin: 0 }}>Detection History</h2>
-              <button onClick={handleClearHistory} style={{ background: '#f87171', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 14 }}>Clear History</button>
-            </div>
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              {history.map((item, idx) => (
-                <li key={idx} style={{ background: '#222', borderRadius: 8, padding: 12, marginBottom: 10 }}>
-                  <div style={{ fontWeight: 500 }}>{item.filename}</div>
-                  <div style={{ color: item.is_deepfake ? '#f87171' : '#34d399' }}>
-                    {item.is_deepfake ? 'Deepfake Detected' : 'Real Media'}
-                  </div>
-                  <div style={{ fontSize: 14 }}>
-                    Confidence: <b>{(item.confidence * 100).toFixed(1)}%</b>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </>}
-    </div>
+          )}
+        </>}
+      </div>
+    </>
   );
 }
 
