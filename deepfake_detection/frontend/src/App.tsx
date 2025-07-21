@@ -1,6 +1,6 @@
 //main app.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const API_BASE = 'http://localhost:8000';
 
@@ -10,10 +10,74 @@ interface DetectionHistoryItem {
   confidence: number;
 }
 
+const themeVars = {
+  dark: {
+    '--color-bg': '#111',
+    '--color-panel': '#18181b',
+    '--color-input': '#23272f',
+    '--color-border': '#fff',
+    '--color-text': '#fff',
+    '--color-accent': '#fff',
+    '--color-shadow': '#000c',
+    '--color-shadow2': '#0006',
+    '--color-shadow3': '#fff2',
+    '--color-error': '#f87171',
+    '--color-history': '#23272f',
+    '--color-confidence': '#fff',
+    '--bg-gradient': 'linear-gradient(135deg, #232526 0%, #414345 100%)',
+  },
+  light: {
+    '--color-bg': '#fff',
+    '--color-panel': '#f3f4f6',
+    '--color-input': '#fff',
+    '--color-border': '#111',
+    '--color-text': '#111',
+    '--color-accent': '#111',
+    '--color-shadow': '#0002',
+    '--color-shadow2': '#0001',
+    '--color-shadow3': '#1112',
+    '--color-error': '#ef4444',
+    '--color-history': '#f3f4f6',
+    '--color-confidence': '#111',
+    '--bg-gradient': 'linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%)',
+  },
+};
+
 function App() {
   // Theme state
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+  const [animating, setAnimating] = useState(false);
+  const [revealTheme, setRevealTheme] = useState<'dark' | 'light'>('dark');
+  const [revealPos, setRevealPos] = useState({ x: 0, y: 0 });
+  const themeBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Apply theme variables to body
+  useEffect(() => {
+    const vars = themeVars[theme];
+    for (const key in vars) {
+      document.body.style.setProperty(key, vars[key as keyof typeof vars]);
+    }
+  }, [theme]);
+
+  // Splitting animation handler
+  const handleThemeToggle = (e: React.MouseEvent) => {
+    if (animating) return;
+    // Get button center position relative to viewport
+    const btn = themeBtnRef.current;
+    if (btn) {
+      const rect = btn.getBoundingClientRect();
+      setRevealPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+    } else {
+      setRevealPos({ x: window.innerWidth - 48, y: 48 });
+    }
+    setRevealTheme(theme === 'dark' ? 'light' : 'dark');
+    setAnimating(true);
+    // Wait for animation, then change theme
+    setTimeout(() => {
+      setTheme(theme === 'dark' ? 'light' : 'dark');
+      setTimeout(() => setAnimating(false), 600); // match animation duration
+    }, 400); // start theme change after overlay expands
+  };
 
   // Auth state
   const [email, setEmail] = useState('');
@@ -173,9 +237,27 @@ function App() {
     setHistory([]);
   };
 
+  // Calculate max radius for circular reveal
+  const getMaxRadius = () => {
+    const dx = Math.max(revealPos.x, window.innerWidth - revealPos.x);
+    const dy = Math.max(revealPos.y, window.innerHeight - revealPos.y);
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
   return (
     <>
-      {/* Global styles for black background, clean dark theme, and 3D floating panels */}
+      {/* Splitting animation overlay */}
+      {animating && (
+        <div
+          className="theme-reveal-overlay"
+          style={{
+            '--reveal-x': `${revealPos.x}px`,
+            '--reveal-y': `${revealPos.y}px`,
+            '--reveal-radius': `${getMaxRadius()}px`,
+            background: themeVars[revealTheme]['--bg-gradient'],
+          } as React.CSSProperties}
+        />
+      )}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         html, body, #root {
@@ -185,34 +267,56 @@ function App() {
           min-height: 100vh;
           height: 100vh;
           font-family: 'Inter', Arial, sans-serif;
-          background: var(--color-bg-${theme});
-          color: var(--color-text-${theme});
+          background: var(--bg-gradient);
+          color: var(--color-text);
           margin: 0;
-          transition: background 0.3s, color 0.3s;
+          transition: background 0.5s, color 0.3s;
+        }
+        .theme-reveal-overlay {
+          position: fixed;
+          left: 0; top: 0; width: 100vw; height: 100vh;
+          z-index: 9999;
+          pointer-events: none;
+          background: var(--bg-gradient);
+          will-change: clip-path;
+          animation: reveal-clip 0.6s cubic-bezier(.7,0,.3,1);
+          clip-path: circle(0px at var(--reveal-x) var(--reveal-y));
+        }
+        @keyframes reveal-clip {
+          0% {
+            clip-path: circle(0px at var(--reveal-x) var(--reveal-y));
+          }
+          80% {
+            clip-path: circle(calc(var(--reveal-radius) * 1.1) at var(--reveal-x) var(--reveal-y));
+          }
+          100% {
+            clip-path: circle(calc(var(--reveal-radius) * 1.2) at var(--reveal-x) var(--reveal-y));
+          }
         }
         .fullscreen-panel {
           min-height: 100vh;
           width: 100vw;
-          background: var(--color-panel-${theme});
+          background: var(--color-panel);
+          color: var(--color-text);
+          box-shadow: 0 12px 48px 0 var(--color-shadow), 0 2px 8px var(--color-shadow2), 0 1.5px 0 var(--color-shadow3);
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: flex-start;
           padding: 48px 0 32px 0;
-          box-shadow: 0 12px 48px 0 var(--color-shadow-${theme}), 0 2px 8px var(--color-shadow2-${theme}), 0 1.5px 0 var(--color-shadow3-${theme});
           border-radius: 32px;
-          transition: box-shadow 0.2s, transform 0.2s;
+          transition: box-shadow 0.2s, transform 0.2s, background 0.5s;
         }
         .fullscreen-panel:hover {
-          box-shadow: 0 24px 64px 0 var(--color-shadow-${theme}), 0 4px 16px var(--color-shadow2-${theme}), 0 2px 0 var(--color-shadow3-${theme});
+          box-shadow: 0 24px 64px 0 var(--color-shadow), 0 4px 16px var(--color-shadow2), 0 2px 0 var(--color-shadow3);
           transform: translateY(-2px) scale(1.01);
         }
         .accent {
-          color: var(--color-accent-${theme});
+          color: var(--color-accent);
         }
         .btn {
-          background: var(--color-accent-${theme});
-          color: #fff;
+          background: var(--color-accent);
+          color: var(--color-bg);
           border: none;
           border-radius: 8px;
           font-size: 17px;
@@ -221,28 +325,29 @@ function App() {
           cursor: pointer;
           margin-top: 8px;
           transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
-          box-shadow: 0 2px 8px var(--color-shadow2-${theme});
+          box-shadow: 0 2px 8px var(--color-shadow2);
         }
         .btn:hover {
-          background: var(--color-accent-${theme});
-          box-shadow: 0 6px 18px var(--color-shadow2-${theme});
+          background: var(--color-text);
+          color: var(--color-bg);
+          box-shadow: 0 6px 18px var(--color-shadow2);
           transform: translateY(-2px) scale(1.03);
         }
         .btn:active {
-          background: var(--color-accent-${theme});
+          background: var(--color-accent);
         }
         .btn.secondary {
-          background: var(--color-panel-${theme});
-          color: var(--color-accent-${theme});
-          border: 1.5px solid var(--color-accent-${theme});
+          background: var(--color-panel);
+          color: var(--color-accent);
+          border: 1.5px solid var(--color-accent);
         }
         .input, .file-input {
           width: 100%;
           padding: 10px;
           border-radius: 7px;
-          border: 1.5px solid var(--color-border-${theme});
-          background: var(--color-input-${theme});
-          color: var(--color-text-${theme});
+          border: 1.5px solid var(--color-border);
+          background: var(--color-input);
+          color: var(--color-text);
           font-size: 16px;
           margin-bottom: 14px;
         }
@@ -251,45 +356,45 @@ function App() {
         }
         .divider {
           height: 1.5px;
-          background: var(--color-border-${theme});
+          background: var(--color-border);
           border: none;
           margin: 28px 0 20px 0;
         }
         .history-panel {
-          background: var(--color-panel-${theme});
+          background: var(--color-panel);
           border-radius: 12px;
           margin-top: 32px;
           padding: 18px 16px;
-          box-shadow: 0 8px 32px var(--color-shadow2-${theme}), 0 2px 8px var(--color-shadow2-${theme});
+          box-shadow: 0 8px 32px var(--color-shadow2), 0 2px 8px var(--color-shadow2);
           width: 100%;
           max-width: 600px;
           transition: box-shadow 0.2s, transform 0.2s;
         }
         .history-panel:hover {
-          box-shadow: 0 16px 48px var(--color-shadow2-${theme}), 0 4px 16px var(--color-shadow2-${theme});
+          box-shadow: 0 16px 48px var(--color-shadow2), 0 4px 16px var(--color-shadow2);
           transform: translateY(-1.5px) scale(1.01);
         }
         .history-item {
-          background: var(--color-history-${theme});
+          background: var(--color-history);
           border-radius: 8px;
           padding: 10px 12px;
           margin-bottom: 10px;
           font-size: 15px;
-          box-shadow: 0 2px 8px var(--color-shadow2-${theme});
+          box-shadow: 0 2px 8px var(--color-shadow2);
         }
         .result-panel {
-          background: var(--color-panel-${theme});
+          background: var(--color-panel);
           border-radius: 12px;
           margin-top: 28px;
           padding: 18px 16px;
-          box-shadow: 0 8px 32px var(--color-shadow2-${theme}), 0 2px 8px var(--color-shadow2-${theme});
+          box-shadow: 0 8px 32px var(--color-shadow2), 0 2px 8px var(--color-shadow2);
           text-align: center;
           width: 100%;
           max-width: 600px;
           transition: box-shadow 0.2s, transform 0.2s;
         }
         .result-panel:hover {
-          box-shadow: 0 16px 48px var(--color-shadow2-${theme}), 0 4px 16px var(--color-shadow2-${theme});
+          box-shadow: 0 16px 48px var(--color-shadow2), 0 4px 16px var(--color-shadow2);
           transform: translateY(-1.5px) scale(1.01);
         }
         .result-label {
@@ -299,10 +404,10 @@ function App() {
         }
         .confidence {
           font-size: 16px;
-          color: var(--color-confidence-${theme});
+          color: var(--color-confidence);
         }
         .error {
-          color: var(--color-error-${theme});
+          color: var(--color-error);
           margin-top: 14px;
           text-align: center;
         }
@@ -322,61 +427,32 @@ function App() {
           max-width: 100%;
           max-height: 200px;
           border-radius: 10px;
-          border: 1.5px solid var(--color-border-${theme});
-          box-shadow: 0 4px 16px var(--color-shadow2-${theme});
+          border: 1.5px solid var(--color-border);
+          box-shadow: 0 4px 16px var(--color-shadow2);
         }
         /* Switch Styles */
-        .theme-toggle {
+        .theme-btn {
           position: absolute;
           top: 32px;
           right: 48px;
           z-index: 10;
+          background: var(--color-panel);
+          color: var(--color-accent);
+          border: 2px solid var(--color-accent);
+          border-radius: 50%;
+          width: 44px;
+          height: 44px;
           display: flex;
           align-items: center;
-        }
-        .switch {
-          position: relative;
-          display: inline-block;
-          width: 54px;
-          height: 28px;
-        }
-        .switch input {
-          opacity: 0;
-          width: 0;
-          height: 0;
-        }
-        .slider {
-          position: absolute;
+          justify-content: center;
+          font-size: 22px;
           cursor: pointer;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: var(--color-panel-${theme});
-          border: 2px solid var(--color-border-${theme});
-          border-radius: 34px;
-          transition: background 0.3s, border 0.3s;
+          transition: background 0.2s, color 0.2s, border 0.2s;
+          box-shadow: 0 2px 8px var(--color-shadow2);
         }
-        .slider:before {
-          position: absolute;
-          content: '';
-          height: 20px;
-          width: 20px;
-          left: 4px;
-          bottom: 2.5px;
-          background: var(--color-accent-${theme});
-          border-radius: 50%;
-          transition: transform 0.3s, background 0.3s;
-          box-shadow: 0 2px 8px var(--color-shadow2-${theme});
-        }
-        input:checked + .slider:before {
-          transform: translateX(24px);
-        }
-        .theme-icon {
-          font-size: 18px;
-          margin: 0 8px;
-          color: var(--color-accent-${theme});
-          user-select: none;
+        .theme-btn:hover {
+          background: var(--color-accent);
+          color: var(--color-bg);
         }
         @media (max-width: 700px) {
           .fullscreen-panel {
@@ -387,21 +463,25 @@ function App() {
             padding-left: 4vw;
             padding-right: 4vw;
           }
-          .theme-toggle {
+          .theme-btn {
             top: 12px;
             right: 12px;
+            width: 38px;
+            height: 38px;
+            font-size: 18px;
           }
         }
       `}</style>
-      {/* Theme toggle switch */}
-      <div className="theme-toggle">
-        <span className="theme-icon" role="img" aria-label="Light">☀️</span>
-        <label className="switch">
-          <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
-          <span className="slider"></span>
-        </label>
-        <span className="theme-icon" role="img" aria-label="Dark">🌙</span>
-      </div>
+      {/* Theme toggle one-tap button */}
+      <button
+        className="theme-btn"
+        onClick={handleThemeToggle}
+        title="Toggle theme"
+        ref={themeBtnRef}
+        style={{ pointerEvents: animating ? 'none' : undefined }}
+      >
+        {theme === 'dark' ? '☀️' : '🌙'}
+      </button>
       <div className="fullscreen-panel">
         {/* Auth UI */}
         {!token ? (
