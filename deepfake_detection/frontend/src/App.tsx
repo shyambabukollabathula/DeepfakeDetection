@@ -11,6 +11,10 @@ interface DetectionHistoryItem {
 }
 
 function App() {
+  // Theme state
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+
   // Auth state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -181,32 +185,33 @@ function App() {
           min-height: 100vh;
           height: 100vh;
           font-family: 'Inter', Arial, sans-serif;
-          background: #111;
-          color: #e5e7eb;
+          background: var(--color-bg-${theme});
+          color: var(--color-text-${theme});
           margin: 0;
+          transition: background 0.3s, color 0.3s;
         }
         .fullscreen-panel {
           min-height: 100vh;
           width: 100vw;
-          background: #23272f;
+          background: var(--color-panel-${theme});
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: flex-start;
           padding: 48px 0 32px 0;
-          box-shadow: 0 12px 48px 0 #000c, 0 2px 8px #0006, 0 1.5px 0 #2228;
+          box-shadow: 0 12px 48px 0 var(--color-shadow-${theme}), 0 2px 8px var(--color-shadow2-${theme}), 0 1.5px 0 var(--color-shadow3-${theme});
           border-radius: 32px;
           transition: box-shadow 0.2s, transform 0.2s;
         }
         .fullscreen-panel:hover {
-          box-shadow: 0 24px 64px 0 #000e, 0 4px 16px #0008, 0 2px 0 #222a;
+          box-shadow: 0 24px 64px 0 var(--color-shadow-${theme}), 0 4px 16px var(--color-shadow2-${theme}), 0 2px 0 var(--color-shadow3-${theme});
           transform: translateY(-2px) scale(1.01);
         }
         .accent {
-          color: #3b82f6;
+          color: var(--color-accent-${theme});
         }
         .btn {
-          background: #3b82f6;
+          background: var(--color-accent-${theme});
           color: #fff;
           border: none;
           border-radius: 8px;
@@ -216,28 +221,28 @@ function App() {
           cursor: pointer;
           margin-top: 8px;
           transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
-          box-shadow: 0 2px 8px #0003;
+          box-shadow: 0 2px 8px var(--color-shadow2-${theme});
         }
         .btn:hover {
-          background: #2563eb;
-          box-shadow: 0 6px 18px #0005;
+          background: var(--color-accent-${theme});
+          box-shadow: 0 6px 18px var(--color-shadow2-${theme});
           transform: translateY(-2px) scale(1.03);
         }
         .btn:active {
-          background: #1d4ed8;
+          background: var(--color-accent-${theme});
         }
         .btn.secondary {
-          background: #23272f;
-          color: #3b82f6;
-          border: 1.5px solid #3b82f6;
+          background: var(--color-panel-${theme});
+          color: var(--color-accent-${theme});
+          border: 1.5px solid var(--color-accent-${theme});
         }
         .input, .file-input {
           width: 100%;
           padding: 10px;
           border-radius: 7px;
-          border: 1.5px solid #374151;
-          background: #18181b;
-          color: #e5e7eb;
+          border: 1.5px solid var(--color-border-${theme});
+          background: var(--color-input-${theme});
+          color: var(--color-text-${theme});
           font-size: 16px;
           margin-bottom: 14px;
         }
@@ -246,45 +251,45 @@ function App() {
         }
         .divider {
           height: 1.5px;
-          background: #374151;
+          background: var(--color-border-${theme});
           border: none;
           margin: 28px 0 20px 0;
         }
         .history-panel {
-          background: #23272f;
+          background: var(--color-panel-${theme});
           border-radius: 12px;
           margin-top: 32px;
           padding: 18px 16px;
-          box-shadow: 0 8px 32px #000b, 0 2px 8px #0003;
+          box-shadow: 0 8px 32px var(--color-shadow2-${theme}), 0 2px 8px var(--color-shadow2-${theme});
           width: 100%;
           max-width: 600px;
           transition: box-shadow 0.2s, transform 0.2s;
         }
         .history-panel:hover {
-          box-shadow: 0 16px 48px #000d, 0 4px 16px #0005;
+          box-shadow: 0 16px 48px var(--color-shadow2-${theme}), 0 4px 16px var(--color-shadow2-${theme});
           transform: translateY(-1.5px) scale(1.01);
         }
         .history-item {
-          background: #18181b;
+          background: var(--color-history-${theme});
           border-radius: 8px;
           padding: 10px 12px;
           margin-bottom: 10px;
           font-size: 15px;
-          box-shadow: 0 2px 8px #0004;
+          box-shadow: 0 2px 8px var(--color-shadow2-${theme});
         }
         .result-panel {
-          background: #23272f;
+          background: var(--color-panel-${theme});
           border-radius: 12px;
           margin-top: 28px;
           padding: 18px 16px;
-          box-shadow: 0 8px 32px #000b, 0 2px 8px #0003;
+          box-shadow: 0 8px 32px var(--color-shadow2-${theme}), 0 2px 8px var(--color-shadow2-${theme});
           text-align: center;
           width: 100%;
           max-width: 600px;
           transition: box-shadow 0.2s, transform 0.2s;
         }
         .result-panel:hover {
-          box-shadow: 0 16px 48px #000d, 0 4px 16px #0005;
+          box-shadow: 0 16px 48px var(--color-shadow2-${theme}), 0 4px 16px var(--color-shadow2-${theme});
           transform: translateY(-1.5px) scale(1.01);
         }
         .result-label {
@@ -294,10 +299,10 @@ function App() {
         }
         .confidence {
           font-size: 16px;
-          color: #60a5fa;
+          color: var(--color-confidence-${theme});
         }
         .error {
-          color: #f87171;
+          color: var(--color-error-${theme});
           margin-top: 14px;
           text-align: center;
         }
@@ -317,8 +322,61 @@ function App() {
           max-width: 100%;
           max-height: 200px;
           border-radius: 10px;
-          border: 1.5px solid #374151;
-          box-shadow: 0 4px 16px #0007;
+          border: 1.5px solid var(--color-border-${theme});
+          box-shadow: 0 4px 16px var(--color-shadow2-${theme});
+        }
+        /* Switch Styles */
+        .theme-toggle {
+          position: absolute;
+          top: 32px;
+          right: 48px;
+          z-index: 10;
+          display: flex;
+          align-items: center;
+        }
+        .switch {
+          position: relative;
+          display: inline-block;
+          width: 54px;
+          height: 28px;
+        }
+        .switch input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: var(--color-panel-${theme});
+          border: 2px solid var(--color-border-${theme});
+          border-radius: 34px;
+          transition: background 0.3s, border 0.3s;
+        }
+        .slider:before {
+          position: absolute;
+          content: '';
+          height: 20px;
+          width: 20px;
+          left: 4px;
+          bottom: 2.5px;
+          background: var(--color-accent-${theme});
+          border-radius: 50%;
+          transition: transform 0.3s, background 0.3s;
+          box-shadow: 0 2px 8px var(--color-shadow2-${theme});
+        }
+        input:checked + .slider:before {
+          transform: translateX(24px);
+        }
+        .theme-icon {
+          font-size: 18px;
+          margin: 0 8px;
+          color: var(--color-accent-${theme});
+          user-select: none;
         }
         @media (max-width: 700px) {
           .fullscreen-panel {
@@ -329,8 +387,21 @@ function App() {
             padding-left: 4vw;
             padding-right: 4vw;
           }
+          .theme-toggle {
+            top: 12px;
+            right: 12px;
+          }
         }
       `}</style>
+      {/* Theme toggle switch */}
+      <div className="theme-toggle">
+        <span className="theme-icon" role="img" aria-label="Light">☀️</span>
+        <label className="switch">
+          <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
+          <span className="slider"></span>
+        </label>
+        <span className="theme-icon" role="img" aria-label="Dark">🌙</span>
+      </div>
       <div className="fullscreen-panel">
         {/* Auth UI */}
         {!token ? (
@@ -374,10 +445,10 @@ function App() {
         {token && <>
           <form onSubmit={handleSubmit} style={{ marginTop: 0, width: '100%', maxWidth: 600 }}>
             <label style={{ marginBottom: 8, display: 'block', fontWeight: 600, color: '#23272f' }}>Select Image or Video</label>
-            <input
-              type="file"
+        <input
+          type="file"
               accept=".jpg,.jpeg,.png,.mp4,.avi,.mov"
-              onChange={handleFileChange}
+          onChange={handleFileChange}
               className="file-input"
             />
             {preview && (
@@ -390,20 +461,20 @@ function App() {
               </div>
             )}
             <button type="submit" className="btn" style={{ width: '100%' }} disabled={loading}>
-              {loading ? 'Processing...' : 'Upload & Detect'}
-            </button>
-          </form>
+          {loading ? 'Processing...' : 'Upload & Detect'}
+        </button>
+      </form>
           {error && <div className="error">{error}</div>}
-          {result && (
+      {result && (
             <div className="result-panel">
               <div className="result-label accent">
-                {result.is_deepfake ? 'Deepfake Detected' : 'Real Media'}
-              </div>
+            {result.is_deepfake ? 'Deepfake Detected' : 'Real Media'}
+          </div>
               <div className="confidence">
-                Confidence: <b>{(result.confidence * 100).toFixed(1)}%</b>
-              </div>
-            </div>
-          )}
+            Confidence: <b>{(result.confidence * 100).toFixed(1)}%</b>
+          </div>
+        </div>
+      )}
           {history.length > 0 && (
             <div className="history-panel">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -426,7 +497,7 @@ function App() {
             </div>
           )}
         </>}
-      </div>
+    </div>
     </>
   );
 }
