@@ -58,7 +58,7 @@ function App() {
       document.body.style.setProperty(key, vars[key as keyof typeof vars]);
     }
   }, [theme]);
-
+//hello
   // Splitting animation handler
   const handleThemeToggle = (e: React.MouseEvent) => {
     if (animating) return;
