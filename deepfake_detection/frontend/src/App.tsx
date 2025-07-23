@@ -43,6 +43,99 @@ const themeVars = {
   },
 };
 
+// Futuristic animated background component
+function FuturisticBackground({ theme }: { theme: 'dark' | 'light' }) {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+  React.useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let animationId: number;
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    // Responsive resize
+    const handleResize = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+    };
+    window.addEventListener('resize', handleResize);
+
+    // Futuristic lines config
+    const lineCount = 18;
+    const lines = Array.from({ length: lineCount }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      length: 120 + Math.random() * 180,
+      speed: 0.6 + Math.random() * 1.2,
+      angle: Math.random() * Math.PI * 2,
+      width: 1.2 + Math.random() * 2.2,
+      opacity: 0.18 + Math.random() * 0.22,
+      hue: theme === 'dark' ? 180 + Math.random() * 80 : 200 + Math.random() * 60,
+    }));
+
+    function draw() {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, width, height);
+      for (const line of lines) {
+        // Animate
+        line.x += Math.cos(line.angle) * line.speed;
+        line.y += Math.sin(line.angle) * line.speed;
+        // Wrap around
+        if (line.x < -line.length) line.x = width + line.length;
+        if (line.x > width + line.length) line.x = -line.length;
+        if (line.y < -line.length) line.y = height + line.length;
+        if (line.y > height + line.length) line.y = -line.length;
+        // Draw
+        ctx.save();
+        ctx.globalAlpha = line.opacity;
+        ctx.shadowBlur = 16;
+        ctx.shadowColor = `hsl(${line.hue}, 100%, ${theme === 'dark' ? '60%' : '70%'})`;
+        ctx.strokeStyle = `hsl(${line.hue}, 100%, ${theme === 'dark' ? '60%' : '70%'})`;
+        ctx.lineWidth = line.width;
+        ctx.beginPath();
+        ctx.moveTo(line.x, line.y);
+        ctx.lineTo(
+          line.x + Math.cos(line.angle) * line.length,
+          line.y + Math.sin(line.angle) * line.length
+        );
+        ctx.stroke();
+        ctx.restore();
+      }
+      animationId = requestAnimationFrame(draw);
+    }
+    draw();
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationId);
+    };
+  }, [theme]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 0,
+        pointerEvents: 'none',
+        opacity: 0.92,
+        transition: 'background 0.5s',
+      }}
+      aria-hidden="true"
+    />
+  );
+}
+
 function App() {
   // Theme state
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -60,7 +153,7 @@ function App() {
   }, [theme]);
 //hello
   // Splitting animation handler
-  const handleThemeToggle = (e: React.MouseEvent) => {
+  const handleThemeToggle = () => {
     if (animating) return;
     // Get button center position relative to viewport
     const btn = themeBtnRef.current;
@@ -246,6 +339,8 @@ function App() {
 
   return (
     <>
+      {/* Futuristic animated background */}
+      <FuturisticBackground theme={theme} />
       {/* Splitting animation overlay */}
       {animating && (
         <div
@@ -267,7 +362,7 @@ function App() {
           min-height: 100vh;
           height: 100vh;
           font-family: 'Inter', Arial, sans-serif;
-          background: var(--bg-gradient);
+          background: transparent;
           color: var(--color-text);
           margin: 0;
           transition: background 0.5s, color 0.3s;
@@ -296,7 +391,7 @@ function App() {
         .fullscreen-panel {
           min-height: 100vh;
           width: 100vw;
-          background: var(--color-panel);
+          background: transparent;
           color: var(--color-text);
           box-shadow: 0 12px 48px 0 var(--color-shadow), 0 2px 8px var(--color-shadow2), 0 1.5px 0 var(--color-shadow3);
           display: flex;
@@ -306,6 +401,8 @@ function App() {
           padding: 48px 0 32px 0;
           border-radius: 32px;
           transition: box-shadow 0.2s, transform 0.2s, background 0.5s;
+          position: relative;
+          z-index: 1;
         }
         .fullscreen-panel:hover {
           box-shadow: 0 24px 64px 0 var(--color-shadow), 0 4px 16px var(--color-shadow2), 0 2px 0 var(--color-shadow3);
@@ -436,7 +533,7 @@ function App() {
           top: 32px;
           right: 48px;
           z-index: 10;
-          background: var(--color-panel);
+          background: color-mix(in srgb, var(--color-panel) 80%, transparent 20%);
           color: var(--color-accent);
           border: 2px solid var(--color-accent);
           border-radius: 50%;
