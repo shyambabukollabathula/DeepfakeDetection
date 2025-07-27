@@ -66,7 +66,7 @@ function FuturisticBackground({ theme }: { theme: 'dark' | 'light' }) {
       canvas.height = height;
     };
     window.addEventListener('resize', handleResize);
-
+//
     // Futuristic lines config
     const lineCount = 18;
     const lines = Array.from({ length: lineCount }, () => ({
