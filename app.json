@@ -1,0 +1,23 @@
+{
+  "name": "Deepfake Detection API",
+  "description": "A FastAPI backend for deepfake detection",
+  "repository": "https://github.com/shyambabukollabathula/DeepfakeDetection",
+  "keywords": ["python", "fastapi", "deepfake", "detection"],
+  "env": {
+    "SECRET_KEY": {
+      "description": "Secret key for JWT tokens",
+      "generator": "secret"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ]
+}
