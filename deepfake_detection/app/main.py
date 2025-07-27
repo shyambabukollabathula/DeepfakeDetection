@@ -4,7 +4,17 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
 import os
-from . import models, schemas, crud, database, deepfake_detector, auth
+from . import models, schemas, crud, database, auth
+
+# Use simple detector for deployment, full detector for local development
+import os
+if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RENDER"):
+    from . import simple_detector as deepfake_detector
+else:
+    try:
+        from . import deepfake_detector
+    except ImportError:
+        from . import simple_detector as deepfake_detector
 import uuid
 
 app = FastAPI()
