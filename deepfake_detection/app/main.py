@@ -47,7 +47,28 @@ def get_db():
 
 @app.on_event("startup")
 def on_startup():
-    models.Base.metadata.create_all(bind=database.engine)
+    try:
+        # Ensure all tables are created
+        models.Base.metadata.create_all(bind=database.engine)
+        print("Database tables created successfully")
+        
+        # Test database connection
+        db = database.SessionLocal()
+        try:
+            # Try to query users table
+            db.execute("SELECT COUNT(*) FROM users")
+            print("Database connection test successful")
+        except Exception as e:
+            print(f"Database connection test failed: {e}")
+            # Try to recreate tables
+            models.Base.metadata.drop_all(bind=database.engine)
+            models.Base.metadata.create_all(bind=database.engine)
+            print("Database tables recreated")
+        finally:
+            db.close()
+            
+    except Exception as e:
+        print(f"Database startup error: {e}")
 
 @app.get("/")
 def read_root():
@@ -85,17 +106,31 @@ def upload_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    ext = os.path.splitext(file.filename)[1].lower()
-    if ext not in ALLOWED_EXTENSIONS:
-        raise HTTPException(status_code=400, detail=f"Unsupported file type: {ext}. Please upload a JPG or PNG image.")
-    # Generate a unique filename
-    unique_filename = f"{uuid.uuid4().hex}{ext}"
-    file_location = os.path.join(MEDIA_DIR, unique_filename)
-    with open(file_location, "wb") as f:
-        f.write(file.file.read())
-    # Create media record with user_id
-    db_media = crud.create_media(db, filename=unique_filename, user_id=current_user.id)
-    return db_media
+    try:
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext not in ALLOWED_EXTENSIONS:
+            raise HTTPException(status_code=400, detail=f"Unsupported file type: {ext}. Please upload a JPG or PNG image.")
+        
+        # Generate a unique filename
+        unique_filename = f"{uuid.uuid4().hex}{ext}"
+        file_location = os.path.join(MEDIA_DIR, unique_filename)
+        
+        # Save file
+        with open(file_location, "wb") as f:
+            f.write(file.file.read())
+        
+        # Create media record with user_id
+        print(f"Creating media record: filename={unique_filename}, user_id={current_user.id}")
+        db_media = crud.create_media(db, filename=unique_filename, user_id=current_user.id)
+        print(f"Media record created successfully: {db_media.id}")
+        return db_media
+        
+    except Exception as e:
+        print(f"Error in upload_media: {str(e)}")
+        # Clean up file if it was created
+        if 'file_location' in locals() and os.path.exists(file_location):
+            os.remove(file_location)
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 @app.post("/detect/{media_id}", response_model=schemas.DetectionResult)
 def detect_media(

@@ -16,11 +16,16 @@ def get_user_by_email(db: Session, email: str):
 
 # Media CRUD operations
 def create_media(db: Session, filename: str, user_id: int) -> models.Media:
-    db_media = models.Media(filename=filename, user_id=user_id)
-    db.add(db_media)
-    db.commit()
-    db.refresh(db_media)
-    return db_media
+    try:
+        db_media = models.Media(filename=filename, user_id=user_id)
+        db.add(db_media)
+        db.commit()
+        db.refresh(db_media)
+        return db_media
+    except Exception as e:
+        db.rollback()
+        print(f"Error creating media record: {str(e)}")
+        raise e
 
 def get_media(db: Session, media_id: int):
     return db.query(models.Media).filter(models.Media.id == media_id).first()
