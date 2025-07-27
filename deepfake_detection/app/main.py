@@ -19,16 +19,14 @@ import uuid
 
 app = FastAPI()
 
-# Add CORS middleware
+# Add CORS middleware - Allow all Vercel deployments
 app.add_middleware(
     CORSMiddleware,
+    allow_origin_regex=r"https://.*\.vercel\.app",  # Allow all Vercel deployments
     allow_origins=[
         "http://localhost:5173", 
         "http://127.0.0.1:5173",
         "https://deepfake-detection-six.vercel.app",  # Your main Vercel URL
-        "https://deepfake-detection-bzlfxyjt1-shyams-projects-e0c34bee.vercel.app",  # Your current deployment URL
-        "https://*.vercel.app",  # Allow all Vercel deployments
-        "*"  # Allow all origins for now (temporary fix)
     ],
     allow_credentials=True,
     allow_methods=["*"],
