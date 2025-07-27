@@ -583,7 +583,7 @@ function App() {
         {/* Auth UI */}
         {!token ? (
           <div style={{ width: '100%', maxWidth: 400 }}>
-            <h2 style={{ textAlign: 'center', marginBottom: 18, fontWeight: 700, fontSize: 28 }}>Deepfake Detection</h2>
+            <h2 style={{ textAlign: 'center', marginBottom: 18, fontWeight: 700, fontSize: 28 }}>Deepfake Detection App</h2>
             <form onSubmit={handleAuth}>
               <input
                 type="email"
