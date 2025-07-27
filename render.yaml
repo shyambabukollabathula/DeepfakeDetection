@@ -2,14 +2,12 @@ services:
   - type: web
     name: deepfake-detection-api
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install --upgrade pip && pip install -r requirements-light.txt
     startCommand: python start.py
     envVars:
       - key: SECRET_KEY
         generateValue: true
+      - key: RENDER
+        value: true
       - key: PYTHON_VERSION
-        value: 3.11.0
-    disk:
-      name: deepfake-data
-      mountPath: /opt/render/project/src/data
-      sizeGB: 1
+        value: 3.11.9
