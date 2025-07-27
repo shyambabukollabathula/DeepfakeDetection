@@ -25,7 +25,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173", 
         "http://127.0.0.1:5173",
-        "https://deepfake-detection-six.vercel.app",  # Your specific Vercel URL
+        "https://deepfake-detection-six.vercel.app",  # Your main Vercel URL
+        "https://deepfake-detection-bzlfxyjt1-shyams-projects-e0c34bee.vercel.app",  # Your current deployment URL
         "https://*.vercel.app",  # Allow all Vercel deployments
         "*"  # Allow all origins for now (temporary fix)
     ],
