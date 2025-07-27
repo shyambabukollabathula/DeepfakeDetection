@@ -1,16 +1,5 @@
 {
-  "name": "deepfake-detection-frontend",
-  "version": 2,
-  "builds": [
-    {
-      "src": "deepfake_detection/frontend/package.json",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "deepfake_detection/frontend/$1"
-    }
-  ]
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "cd frontend && npm install"
 }
