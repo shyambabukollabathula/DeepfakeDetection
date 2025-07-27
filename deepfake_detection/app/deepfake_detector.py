@@ -23,6 +23,23 @@ class DeepFakeClassifier(nn.Module):
         return x
 
 model = DeepFakeClassifier()
+
+# Try to load model weights
+import os
+weights_path = os.path.join(os.path.dirname(__file__), "..", "weights", "df_model1.pth")
+if os.path.exists(weights_path):
+    try:
+        model.load_state_dict(torch.load(weights_path, map_location='cpu'))
+        print(f"[INFO] Model weights loaded from {weights_path}")
+    except Exception as e:
+        print(f"[WARNING] Could not load model weights: {e}")
+        print("[WARNING] Using untrained model - results will be random!")
+else:
+    print(f"[WARNING] Model weights not found at {weights_path}")
+    print("[WARNING] Using untrained model - results will be random!")
+    print("[INFO] To use a trained model, place your model weights file at:")
+    print(f"[INFO] {weights_path}")
+
 model.eval()
 
 def preprocess_image(file_path):

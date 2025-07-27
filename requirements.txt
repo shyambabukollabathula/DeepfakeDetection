@@ -10,4 +10,4 @@ opencv-python
 timm
 python-jose[cryptography]
 passlib[bcrypt]
-email-validator 
+email-validator

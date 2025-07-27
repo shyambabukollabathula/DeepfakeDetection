@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 interface DetectionHistoryItem {
   filename: string;
@@ -66,7 +66,7 @@ function FuturisticBackground({ theme }: { theme: 'dark' | 'light' }) {
       canvas.height = height;
     };
     window.addEventListener('resize', handleResize);
-//
+
     // Futuristic lines config
     const lineCount = 18;
     const lines = Array.from({ length: lineCount }, () => ({
